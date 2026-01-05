@@ -1,0 +1,25 @@
+{% extends "base.html.j2" %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+
+<table>
+  <thead>
+    <tr>
+      {% for col in columns %}
+      <th>{{ col.label }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      {% for col in columns %}
+      <td>{{ row.get(col.key, "") }}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
