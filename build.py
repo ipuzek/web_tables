@@ -1,4 +1,4 @@
-import requests
+import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 
@@ -6,35 +6,35 @@ env = Environment(loader=FileSystemLoader("templates"))
 out = Path("site")
 out.mkdir(exist_ok=True)
 
-# --- Page 1 -------------------------------------------------
+def fetch_tidy_ko():
 
-data_mb = requests.get("https://oss.uredjenazemlja.hr/oss/public/search-lr-parcels/main-books").json()
-data_ko = requests.get("https://oss.uredjenazemlja.hr/oss/public/search-cad-parcels/municipalities").json()
+    # Load and prepare dataframe
+    off = (pd.read_json("https://oss.uredjenazemlja.hr/oss/public/search-cad-parcels/offices")
+        .rename(columns={"id": "office_id", "name":"office_name"}))
 
-def tidy_mb(data):
-    return [
-        {
-            "mainBookId": el.get("key1"),
-            "mainBookName": el.get("value1"),
-            "institutionId": el.get("key2"),
-            "institutionName": el.get("value2"),
-            "displej": el.get("displayValue1"),
-        }
-        for el in data
-    ]
+    dept = (pd.read_json("https://oss.uredjenazemlja.hr/oss/public/search-cad-parcels/departments")
+            .rename(columns={"id": "dept_id", "name":"dept_name", "officeId": "office_id"}))
 
-def tidy_ko(data):
-    new_dict = [
-        {
-            "cadastreMunicipalityRegNum": el.get("key2"),
-            "displej": el.get("displayValue1"),
-        }
-        for el in data 
-    ]
+    mun = (pd.read_json("https://oss.uredjenazemlja.hr/oss/public/search-cad-parcels/municipalities")
+        .rename(columns={
+            "key1":"cadastreMunicipalityId",
+            "value1":"ko_mb__name",
+            "key2":"ko_mb",
+            "value2": "office_id",
+            "value3": "dept_id"})
+        )
+
+    mun["name"] = mun.apply(lambda row: row["ko_mb__name"].replace(str(row["ko_mb"]), "").strip().upper(), axis=1)
+
+    off_dept = dept.merge(off, how="left")
+
+    mun_complete = mun.merge(off_dept, how="left").convert_dtypes()
+
+    df = mun_complete[["ko_mb", "name", "dept_name", "office_name"]]
     
-    for el in new_dict:
-        el["displej"] = el["displej"].removeprefix(el.get("cadastreMunicipalityRegNum")).strip()
-    return new_dict
+    return df.to_dict(orient="records")
+
+
 
 pages = [
     
@@ -43,7 +43,7 @@ pages = [
     {
         "output": "index.html",
         "title": "KO data",
-        "rows": tidy_ko(data_ko),
+        "rows": fetch_tidy_ko(),
         "columns": [
             {"key": "cadastreMunicipalityRegNum", "label": "Matični broj KO"},
             {"key": "displej", "label": "Puni naziv"},
@@ -54,8 +54,8 @@ pages = [
 
     {
         "output": "other.html",
-        "title": "Main books",
-        "rows": tidy_mb(data_mb),
+        "title": "Main books FALSE",
+        "rows": fetch_tidy_ko,
         "columns": [
             {"key": "mainBookId", "label": "MainBookId"},
             {"key": "mainBookName", "label": "Glavna knjiga"},
