@@ -32,8 +32,29 @@ def fetch_tidy_ko():
 
     df = mun_complete[["ko_mb", "name", "dept_name", "office_name"]]
     
+    df = df.sort_values(["office_name", "dept_name", "name"])
+    
     return df.to_dict(orient="records")
 
+def fetch_tidy_mb():
+
+    df = (
+        pd.read_json('https://oss.uredjenazemlja.hr/oss/public/search-lr-parcels/main-books')
+        .dropna(axis="columns", how="all")
+        .convert_dtypes()
+        .rename(columns={
+            "key1" : "mainBookId",
+            "value1" : "mainBookName",
+            "key2" : "institutionId",
+            "value2" : "institutionName",
+            "displayValue1" : "displej"
+        })
+    )
+
+    return (df
+            .sort_values(["institutionName", "mainBookName"])
+            .reset_index(drop=True)
+            .to_dict(orient="records"))
 
 
 pages = [
@@ -47,8 +68,8 @@ pages = [
         "columns": [
             {"key": "ko_mb", "label": "Matični broj KO"},
             {"key": "name", "label": "Naziv KO"},
-            {"key": "dept_name", "label": "Naziv KO"},
-            {"key": "office_name", "label": "Naziv KO"},
+            {"key": "dept_name", "label": "Naziv odjela"},
+            {"key": "office_name", "label": "Naziv ureda"},
         ],
     },
 
@@ -56,8 +77,8 @@ pages = [
 
     {
         "output": "other.html",
-        "title": "Main books FALSE",
-        "rows": fetch_tidy_ko(),
+        "title": "Main books",
+        "rows": fetch_tidy_mb(),
         "columns": [
             {"key": "mainBookId", "label": "MainBookId"},
             {"key": "mainBookName", "label": "Glavna knjiga"},
