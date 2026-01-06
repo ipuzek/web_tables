@@ -57,7 +57,7 @@ pages = [
     {
         "output": "other.html",
         "title": "Main books FALSE",
-        "rows": fetch_tidy_ko,
+        "rows": fetch_tidy_ko(),
         "columns": [
             {"key": "mainBookId", "label": "MainBookId"},
             {"key": "mainBookName", "label": "Glavna knjiga"},
