@@ -45,8 +45,10 @@ pages = [
         "title": "KO data",
         "rows": fetch_tidy_ko(),
         "columns": [
-            {"key": "cadastreMunicipalityRegNum", "label": "Matični broj KO"},
-            {"key": "displej", "label": "Puni naziv"},
+            {"key": "ko_mb", "label": "Matični broj KO"},
+            {"key": "name", "label": "Naziv KO"},
+            {"key": "dept_name", "label": "Naziv KO"},
+            {"key": "office_name", "label": "Naziv KO"},
         ],
     },
 
