@@ -28,6 +28,8 @@ def fetch_tidy_ko():
         )
     
     off["office_name"] = off["office_name"].str.replace("PODRUČNI URED ZA KATASTAR", "PUK")
+    
+    dept["dept_name"] = dept["dept_name"].str.replace("ODJEL ZA KATASTAR NEKRETNINA", "OKN")
 
     mun["name"] = mun.apply(lambda row: row["ko_mb__name"].replace(str(row["ko_mb"]), "").strip().upper(), axis=1)
 
