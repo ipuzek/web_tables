@@ -75,8 +75,12 @@ def fetch_atom_links():
     df["ko_mb"] = df.url.map(lambda x:splitext(basename(urlparse(x).path))[0].split('-')[1])
     df["ko_mb"] = pd.to_numeric(df["ko_mb"])
     
-    
-    
+    return df
+
+df_atom = fetch_atom_links()
+df_atom_enriched = (df_atom
+                    .merge(df_ko, how="left")
+                    .drop(columns="name"))
 
 pages = [
     
@@ -105,6 +109,21 @@ pages = [
             {"key": "mainBookName", "label": "Glavna knjiga"},
             {"key": "institutionName", "label": "ZK odjel"},
             {"key": "displej", "label": "Puni naziv"},
+        ],
+    },
+    
+    # --- Page 3 ---------------------------------------------
+
+    {
+        "output": "atom_links.html",
+        "title": "",
+        "rows": df_atom_enriched.to_dict(orient="records"),
+        "columns": [
+            {"key": "ko_name", "label": "Naziv KO"},
+            {"key": "ko_mb", "label": "Matični broj KO"},
+            {"key": "url", "label": "Preuzimanje"},
+            {"key": "dept_name", "label": "Naziv odjela"},
+            {"key": "office_name", "label": "Naziv ureda"},
         ],
     },
 
