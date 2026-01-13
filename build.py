@@ -1,4 +1,7 @@
+import feedparser
 import pandas as pd
+from urllib.parse import urlparse
+from os.path import basename, splitext
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 
@@ -36,7 +39,9 @@ def fetch_tidy_ko():
     
     df = df.sort_values(["office_name", "dept_name", "name"])
     
-    return df.to_dict(orient="records")
+    return df
+
+df_ko = fetch_tidy_ko()
 
 def fetch_tidy_mb():
 
@@ -55,9 +60,23 @@ def fetch_tidy_mb():
 
     return (df
             .sort_values(["institutionName", "mainBookName"])
-            .reset_index(drop=True)
-            .to_dict(orient="records"))
+            .reset_index(drop=True))
 
+df_mb = fetch_tidy_mb()
+
+
+def fetch_atom_links():
+
+    atom_feed = feedparser.parse('https://oss.uredjenazemlja.hr/oss/public/atom/atom_feed.xml')
+    rows = [(entry.get("title"), entry.get("link")) for entry in atom_feed.get("entries")]
+
+    df = pd.DataFrame(rows, columns=["ko_name", "url"])
+    df["ko_name"] = df.ko_name.str.removeprefix("Cadastral municipality").str.strip()
+    df["ko_mb"] = df.url.map(lambda x:splitext(basename(urlparse(x).path))[0].split('-')[1])
+    df["ko_mb"] = pd.to_numeric(df["ko_mb"])
+    
+    
+    
 
 pages = [
     
@@ -66,7 +85,7 @@ pages = [
     {
         "output": "index.html",
         "title": "",
-        "rows": fetch_tidy_ko(),
+        "rows": df_ko.to_dict(orient="records"),
         "columns": [
             {"key": "ko_mb", "label": "Matični broj KO"},
             {"key": "name", "label": "Naziv KO"},
@@ -80,7 +99,7 @@ pages = [
     {
         "output": "other.html",
         "title": "",
-        "rows": fetch_tidy_mb(),
+        "rows": df_mb.to_dict(orient="records"),
         "columns": [
             {"key": "mainBookId", "label": "MainBookId"},
             {"key": "mainBookName", "label": "Glavna knjiga"},
