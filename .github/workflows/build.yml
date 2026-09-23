@@ -1,3 +1,4 @@
+```yaml
 name: Build site
 
 on:
@@ -6,6 +7,8 @@ on:
 
   schedule:
     - cron: "0 6 * * *"   # 07:00 CET / 08:00 CEST
+
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -20,6 +23,28 @@ jobs:
       - uses: astral-sh/setup-uv@v3
 
       - run: uv sync
+
+      - name: Test OSS access
+        run: |
+          uv run python - <<'PY'
+          import httpx
+
+          url = "https://oss.uredjenazemlja.hr/oss/public/search-cad-parcels/offices"
+
+          headers = {
+              "User-Agent": "Mozilla/5.0",
+              "Accept": "application/json, text/plain, */*",
+          }
+
+          with httpx.Client(headers=headers, timeout=20) as client:
+              ip = client.get("https://api.ipify.org").text
+              r = client.get(url)
+
+          print("Egress IP:", ip)
+          print("OSS status:", r.status_code)
+          print("OSS body:", r.text[:500])
+          PY
+
       - run: uv run python build.py
 
       - name: Deploy to GitHub Pages
@@ -27,3 +52,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: site
+```
